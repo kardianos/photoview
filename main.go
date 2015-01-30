@@ -20,6 +20,7 @@ const (
 	FileRoot    = "/data/store/Pictures"
 	TrashFolder = "/data/store/Pictures/Trash"
 	ThumbRes    = 400
+	SmallRes    = 1200
 )
 
 const debug = true
@@ -173,15 +174,23 @@ func (p *program) apiPOST(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 		}
+	case "/refresh-cache":
+		err = p.refreshCache(reqPath, list)
 	case "/rot-left":
 		err = p.editImage(RotLeft, reqPath, list)
 	case "/rot-right":
 		err = p.editImage(RotRight, reqPath, list)
 	case "/rot-flip":
 		err = p.editImage(RotFlip, reqPath, list)
-	case downloadUrl:
+	case "/download-full":
 		var key string
-		key, err = p.downloadAssignKey(reqPath, list)
+		key, err = p.downloadAssignKey(reqPath, list, false)
+		if err == nil {
+			w.Write([]byte("/api" + downloadUrl + "?key=" + key))
+		}
+	case "/download-small":
+		var key string
+		key, err = p.downloadAssignKey(reqPath, list, true)
 		if err == nil {
 			w.Write([]byte("/api" + downloadUrl + "?key=" + key))
 		}
@@ -203,6 +212,7 @@ func (p *program) apiGET(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		http.Error(w, err.Error(), 500)
+		logger.Error("Error downloading key: ", err)
 	}
 }
 

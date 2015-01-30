@@ -45,8 +45,8 @@
 			z-index: 3;
 			top: 6px;
 			left: 50%;
-			margin-left: -100px;
-			width: 200px;
+			margin-left: -150px;
+			width: 300px;
 			height: 40px;
 		}
 		#imgToolbar div {
@@ -158,6 +158,9 @@ function selectedPhotos() {
 	return $("#photos").find('.select[data-select="on"]');
 }
 function api(action, list, callback) {
+	if(list.length === 0) {
+		return;
+	}
 	$.ajax("/api/" + action, {
 		type: "POST",
 		data: {
@@ -222,6 +225,13 @@ function init() {
 			});
 		});
 	});
+	bar.find(".refresh-cache").on("click", function() {
+		var list = selectedPhotos();
+		var names = getNames(list);
+		api("refresh-cache", names, function() {
+			updateImages(list);
+		});
+	});
 	bar.find(".rot-left").on("click", function() {
 		var list = selectedPhotos();
 		var names = getNames(list);
@@ -243,15 +253,26 @@ function init() {
 			updateImages(list);
 		});
 	});
-	bar.find(".download").on("click", function() {
+	bar.find(".download-full").on("click", function() {
 		var list = selectedPhotos();
 		var names = getNames(list);
-		api("download", names, function(url) {
+		api("download-full", names, function(url) {
 			var iframe = $('<iframe style="display: none;" src="' + url + '"></iframe>');
 			$("body").append(iframe);
 			setTimeout(function() {
 				iframe.remove();
-			}, 1000);
+			}, 60000);
+		});
+	});
+	bar.find(".download-small").on("click", function() {
+		var list = selectedPhotos();
+		var names = getNames(list);
+		api("download-small", names, function(url) {
+			var iframe = $('<iframe style="display: none;" src="' + url + '"></iframe>');
+			$("body").append(iframe);
+			setTimeout(function() {
+				iframe.remove();
+			}, 60000);
 		});
 	});
 }
@@ -261,11 +282,14 @@ function init() {
 
 <div id="imgToolbar">
 	<div class="clear">clear selected (<span id="SelectCount">0</span>)</div>
-	<div class="download">⬇</div>
-	<div class="rot-left">⤹</div>
-	<div class="rot-right">⤸</div>
-	<div class="rot-flip">↶</div>
-	<div class="delete">♻</div>
+	<div class="download-full" title="Download fullsize images">⬇</div>
+	<div class="download-small" title="Download smaller images">↓</div>
+	<div class="refresh-cache" title="Refresh cached image">⥁</div>
+	<div class="rot-left" title="Rotate 90° CCW">⤹</div>
+	<div class="rot-right" title="Rotate 90° CW">⤸</div>
+	<div class="rot-flip" title="Rotate 180°">↶</div>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<div class="delete" title="Delete image">♻</div>
 </div>	
 	<h2>
 	<a href="..">..</a>
