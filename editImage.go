@@ -43,7 +43,8 @@ func (p *program) editImage(rot Rot, folder string, list []string) error {
 		if err != nil {
 			return err
 		}
-		err = os.Chtimes(filename, fi.ModTime(), fi.ModTime())
+		tm := fi.ModTime()
+		err = os.Chtimes(filename, tm, tm)
 		if err != nil {
 			return err
 		}

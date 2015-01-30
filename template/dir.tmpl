@@ -122,6 +122,10 @@
 			height: 16px;
 			text-align: center;
 		}
+		#cboxTitle {
+			border-radius: 12px;
+			font-family: sans-serif;
+		}
 	</style>
 	
 	<script type="text/javascript" src="/lib/jquery-1.11.1.min.js"></script>
@@ -177,7 +181,15 @@ function init() {
 		slideshow: true,
 		slideshowAuto: false,
 		maxWidth: "95%",
-		maxHeight: "95%"
+		maxHeight: "95%",
+		title: function() {
+			return $(this).attr("data-name");
+		},
+		onLoad: function() {
+			// Prevent cache after modification.
+			var src = $(this).attr("data-name") + "?_=" + randomString();
+			$(this).attr("href", src);
+		}
 	});
 	
 	$("#photos").on("click", ".off", function() {
@@ -281,7 +293,7 @@ function init() {
 						<div class="on">✓</div>
 					</div>
 					<div class="file-name">{{.Name}}</div>
-					<a class="album" href="{{.Name}}"><img class="small" src="{{.Name}}@{{$.Res}}" /></a>
+					<a class="album" href="{{.Name}}" data-name="{{.Name}}"><img class="small" src="{{.Name}}@{{$.Res}}" /></a>
 				</div>
 			{{end}}
 		{{end}}
