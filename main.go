@@ -19,11 +19,12 @@ const (
 	ListenOn    = ":8080"
 	FileRoot    = "/data/store/Pictures"
 	TrashFolder = "/data/store/Pictures/Trash"
+	CacheFolder = "cache"
 	ThumbRes    = 400
 	SmallRes    = 1200
 )
 
-const debug = true
+const debug = false
 
 const (
 	photosUrl   = "/photos"
@@ -40,6 +41,7 @@ var logger service.Logger
 type program struct {
 	exit     chan struct{}
 	execDir  string
+	cacheDir string
 	listener net.Listener
 
 	T *template.Template
@@ -58,6 +60,11 @@ func (p *program) Start(s service.Service) error {
 	p.execDir, err = osext.ExecutableFolder()
 	if err != nil {
 		return err
+	}
+	if filepath.IsAbs(CacheFolder) {
+		p.cacheDir = CacheFolder
+	} else {
+		p.cacheDir = filepath.Join(p.execDir, CacheFolder)
 	}
 
 	err = p.loadTemplate()

@@ -53,7 +53,7 @@ func (p *program) editImage(rot Rot, folder string, list []string) error {
 }
 
 func (p *program) refreshCache(folder string, list []string) error {
-	cacheFolder := filepath.Join(p.execDir, "cache", folder)
+	cacheFolder := filepath.Join(p.cacheDir, folder)
 	cf, err := os.Open(cacheFolder)
 	if err != nil {
 		return err

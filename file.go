@@ -24,7 +24,7 @@ func (p *program) serveFile(w http.ResponseWriter, r *http.Request, fullPath, ur
 		return err
 	}
 	isMovie := false
-	cachePath := filepath.Join(p.execDir, "cache", r.URL.Path)
+	cachePath := filepath.Join(p.cacheDir, r.URL.Path)
 	if strings.HasSuffix(urlPath, ".mp4") {
 		// Movie: avconv -i /data/store/Pictures/2015-Q1/VID_20150125_1928.mp4 -vframes 1 -ss 00:00:01 out.jpg
 		createThumbFrom = cachePath + ".orig.jpg"
