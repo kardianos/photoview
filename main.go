@@ -19,7 +19,7 @@ const (
 	ListenOn    = ":8080"
 	FileRoot    = "/data/store/Pictures"
 	TrashFolder = "/data/store/Pictures/Trash"
-	CacheFolder = "cache"
+	CacheFolder = "/data/store/scratch/cache"
 	ThumbRes    = 400
 	SmallRes    = 1200
 )
