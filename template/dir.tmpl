@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Images</title>
+	
+	<link rel="stylesheet" type="text/css" href="/lib/colorbox.css">
+	<style>
+		body {
+			color: white;
+			background: rgb(47, 47, 47);
+		}
+		a {
+			color: white;
+		}
+		p.description {
+			display: inline-block;
+			max-width: 600px;
+		}
+		.right {
+			float: right;	
+		}
+		div.item {
+			display: inline-block;
+		}
+		a.nav {
+			margin: 10px;
+			padding: 10px;
+			background: lightgray;
+			border-radius: 5px;
+			border: 2px solid black;
+			display: inline-block;
+			color: black;
+		}
+		img.small {
+			border-radius: 10px;
+			border: 1px solid black;
+		}
+		#folders {
+			-webkit-column-count: 4;
+			-moz-column-count: 4;
+			column-count: 4;
+		}
+		#imgToolbar {
+			position: fixed;
+			z-index: 3;
+			top: 6px;
+			left: 50%;
+			margin-left: -100px;
+			width: 200px;
+			height: 40px;
+		}
+		#imgToolbar div {
+			display: inline-block;
+			cursor: pointer;
+			font-size: 36px;
+			text-decoration: none;
+			border: 3px solid black;
+			border-radius: 6px;
+			color: rgba(0,0,0,.5);
+			background: rgba(255,255,255,.5);
+			text-align: center;
+			
+			-webkit-touch-callout: none;
+			-webkit-user-select: none;
+			-khtml-user-select: none;
+			-moz-user-select: none;
+			-ms-user-select: none;
+			user-select: none;
+		}
+		#imgToolbar div.clear {
+			display: block;
+			font-size: 16px;
+		}
+		#imgToolbar:hover * {
+			color: rgba(0,0,0,1);
+			background: rgba(255,255,255,1);
+		}
+		#imgToolbar *:active {
+			color: rgba(0,0,0,1);
+			background: rgba(255,255,255,.6);
+		}
+		.item {
+			position: relative;
+		}
+		
+		.item>.select {
+			position: absolute;
+			top: 0px;
+			left: 0px;
+		}
+		.item>.select>div {
+			font-size: 72px;
+			border-radius: 999px;
+			cursor: pointer;
+		}
+		.item>.select>div.off {
+			background: rgba(0,0,0,.5);
+			color: rgba(255,255,255,.5);
+		}
+		.item>.select>div.on {
+			display: none;
+			background: rgba(0,0,0,1);
+			color: rgba(255,255,255,1);
+		}
+		.item>.select[data-select="on"]>div.off {
+			display: none;
+		}
+		.item>.select[data-select="on"]>div.on {
+			display: block;
+		}
+		
+		.item>.file-name {
+			position: absolute;
+			color: white;
+			background: rgba(0,0,0,.5);
+			border-radius: 10px;
+			font-family: sans-serif;
+			font-size: 10px;
+			left: 0px;
+			right: 0px;
+			bottom: 0px;
+			height: 16px;
+			text-align: center;
+		}
+	</style>
+	
+	<script type="text/javascript" src="/lib/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="/lib/jquery.colorbox-min.js"></script>
+	<script type="text/javascript">
+var PhotoRes = {{.Res|js}};
+
+function updateCount() {
+	$("#SelectCount").text("" + selectedPhotos().length);
+}
+function getNames(list) {
+	var names = [];
+	list.each(function() {
+		names.push($(this).data("name"));
+	});
+	return names;
+}
+function randomString() {
+	return "" + ((Math.random() * 1000000)|0);	
+}
+function updateImages(list) {
+	var rand = randomString();
+	list.each(function() {
+		var sel = $(this);
+		var src = sel.data("name") + "@" + PhotoRes + "?_=" + rand;
+		sel.parents(".item").find("img").attr("src", src);
+	});
+}
+function selectedPhotos() {
+	return $("#photos").find('.select[data-select="on"]');
+}
+function api(action, list, callback) {
+	$.ajax("/api/" + action, {
+		type: "POST",
+		data: {
+			"path": location.pathname,
+			"list": list
+		},
+		traditional: true,
+	}).fail(function() {
+		console.log(arguments);
+	}).done(function(msg) {
+		if(typeof callback === "function") {
+			callback(msg);
+		}
+	});
+}
+
+function init() {
+	$(".album").colorbox({
+		rel:'album',
+		transition:"none",
+		slideshow: true,
+		slideshowAuto: false,
+		maxWidth: "95%",
+		maxHeight: "95%"
+	});
+	
+	$("#photos").on("click", ".off", function() {
+		$(this).parent().attr("data-select", "on");
+		updateCount();
+	});
+	$("#photos").on("click", ".on", function() {
+		$(this).parent().attr("data-select", false);
+		updateCount();
+	});
+	
+	var bar = $("#imgToolbar");
+	bar.find(".clear").on("click", function() {
+		selectedPhotos().attr("data-select", false);
+		updateCount();
+	});
+	
+	bar.find(".delete").on("click", function() {
+		var list = selectedPhotos();
+		var message = "Are you sure you wish to delete the " + list.length + " selected photos?";
+		var ok = confirm(message);
+		if(!ok) {
+			return;
+		}
+		var names = getNames(list);
+		api("delete", names, function() {
+			list.each(function() {
+				$(this).parents(".item").remove();
+				updateCount();
+			});
+		});
+	});
+	bar.find(".rot-left").on("click", function() {
+		var list = selectedPhotos();
+		var names = getNames(list);
+		api("rot-left", names, function() {
+			updateImages(list);
+		});
+	});
+	bar.find(".rot-right").on("click", function() {
+		var list = selectedPhotos();
+		var names = getNames(list);
+		api("rot-right", names, function() {
+			updateImages(list);
+		});
+	});
+	bar.find(".rot-flip").on("click", function() {
+		var list = selectedPhotos();
+		var names = getNames(list);
+		api("rot-flip", names, function() {
+			updateImages(list);
+		});
+	});
+	bar.find(".download").on("click", function() {
+		var list = selectedPhotos();
+		var names = getNames(list);
+		api("download", names, function(url) {
+			var iframe = $('<iframe style="display: none;" src="' + url + '"></iframe>');
+			$("body").append(iframe);
+			setTimeout(function() {
+				iframe.remove();
+			}, 1000);
+		});
+	});
+}
+	</script>
+</head>
+<body>
+
+<div id="imgToolbar">
+	<div class="clear">clear selected (<span id="SelectCount">0</span>)</div>
+	<div class="download">⬇</div>
+	<div class="rot-left">⤹</div>
+	<div class="rot-right">⤸</div>
+	<div class="rot-flip">↶</div>
+	<div class="delete">♻</div>
+</div>	
+	<h2>
+	<a href="..">..</a>
+	{{range .UrlParts}}
+		/ {{.}}
+	{{end}}
+	</h2>
+	
+	{{if .ItemsName}}
+		<div id="folders">
+		{{range .ItemsName}}
+			{{if .IsDir}}
+				<br><a href="{{.Name}}/">{{.Name}}</a>
+			{{end}}
+		{{end}}
+		</div>
+		
+		<hr>
+		<div id="photos">
+		{{range .ItemsTime}}
+			{{if and (not .IsDir) (isImage .Name)}}
+				<div class="item">
+					<div class="select" data-name="{{.Name}}">
+						<div class="off">+</div>
+						<div class="on">✓</div>
+					</div>
+					<div class="file-name">{{.Name}}</div>
+					<a class="album" href="{{.Name}}"><img class="small" src="{{.Name}}@{{$.Res}}" /></a>
+				</div>
+			{{end}}
+		{{end}}
+		</div>
+		
+		<hr>
+		<h3>Videos</h3>
+		<div>
+		{{range .ItemsTime}}
+			{{if and (not .IsDir) (isMovie .Name)}}
+				<div class="item"><a class="video" target="_blank" href="{{.Name}}"><img class="small" src="{{.Name}}@{{$.Res}}" /></a></div>
+			{{end}}
+		{{end}}
+		</div>
+	{{else}}
+		Empty folder
+	{{end}}
+	
+	<script type="text/javascript">
+init();
+	</script>
+</body>
+</html>
