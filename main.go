@@ -90,7 +90,7 @@ func (p *program) Start(s service.Service) error {
 	}
 
 	// Start should not block. Do the actual work async.
-	logger.Info("Starting")
+	logger.Infof("Starting. Listen to %s", config.ListenOn)
 	go p.run(l)
 	return nil
 }

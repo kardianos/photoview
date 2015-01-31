@@ -328,7 +328,10 @@ function init() {
 		<div>
 		{{range .ItemsTime}}
 			{{if and (not .IsDir) (isMovie .Name)}}
-				<div class="item"><a class="video" target="_blank" href="{{.Name}}"><img class="small" src="{{.Name}}@{{$.Res}}" /></a></div>
+				<div class="item">
+					<div class="file-name">{{.Name}}</div>
+					<a class="video" target="_blank" href="{{.Name}}"><img class="small" src="{{.Name}}@{{$.Res}}" /></a>
+				</div>
 			{{end}}
 		{{end}}
 		</div>
