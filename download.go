@@ -52,7 +52,7 @@ func (p *program) downloadWriteKey(key string, w http.ResponseWriter) error {
 	result := &bytes.Buffer{}
 
 	for _, item := range bl.list {
-		filename := filepath.Join(FileRoot, bl.folder, item)
+		filename := filepath.Join(config.FileRoot, bl.folder, item)
 		fi, err := os.Stat(filename)
 		if err != nil {
 			return err
@@ -80,7 +80,7 @@ func (p *program) downloadWriteKey(key string, w http.ResponseWriter) error {
 			if err != nil {
 				return err
 			}
-			resized := imaging.Fit(fullImage, SmallRes, SmallRes, imaging.Linear)
+			resized := imaging.Fit(fullImage, config.SmallRes, config.SmallRes, imaging.Linear)
 
 			err = imaging.Encode(result, resized, imaging.JPEG)
 			if err != nil {
@@ -117,7 +117,7 @@ func getImage(filename string, small bool) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	resized := imaging.Fit(fullImage, SmallRes, SmallRes, imaging.Linear)
+	resized := imaging.Fit(fullImage, config.SmallRes, config.SmallRes, imaging.Linear)
 
 	r, w := io.Pipe()
 	go imaging.Encode(w, resized, imaging.JPEG)

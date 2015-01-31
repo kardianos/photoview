@@ -34,7 +34,7 @@ func (s sortFileInfoName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s sortFileInfoName) Less(i, j int) bool { return s[i].Name() < s[j].Name() }
 
 type DirTmpl struct {
-	Res       uint
+	Res       int
 	UrlParts  []string
 	ItemsName []os.FileInfo
 	ItemsTime []os.FileInfo
@@ -42,7 +42,7 @@ type DirTmpl struct {
 
 func NewDirTmpl(fullPath, urlPath string) (*DirTmpl, error) {
 	dt := &DirTmpl{
-		Res: ThumbRes,
+		Res: config.ThumbRes,
 	}
 
 	f, err := os.Open(fullPath)

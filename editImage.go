@@ -19,7 +19,7 @@ const (
 
 func (p *program) editImage(rot Rot, folder string, list []string) error {
 	for _, item := range list {
-		filename := filepath.Join(FileRoot, folder, item)
+		filename := filepath.Join(config.FileRoot, folder, item)
 		fi, err := os.Stat(filename)
 		if err != nil {
 			return err

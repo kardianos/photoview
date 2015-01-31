@@ -12,21 +12,33 @@ import (
 	"strings"
 
 	"bitbucket.org/kardianos/osext"
+	"github.com/BurntSushi/toml"
 	"github.com/kardianos/service"
 )
 
-const (
-	ListenOn    = ":8080"
-	FileRoot    = "/data/store/Pictures"
-	TrashFolder = "/data/store/Pictures/Trash"
-	CacheFolder = "/data/store/scratch/cache"
-	ThumbRes    = 400
-	SmallRes    = 1200
-)
+var config = struct {
+	ListenOn    string
+	FileRoot    string
+	TrashFolder string
+	CacheFolder string
+	ThumbRes    int
+	SmallRes    int
 
-const debug = false
+	Debug bool
+}{
+	ListenOn:    ":8080",
+	FileRoot:    "/data/store/Pictures",
+	TrashFolder: "/data/store/Pictures/Trash",
+	CacheFolder: "/data/store/scratch/cache",
+	ThumbRes:    400,
+	SmallRes:    1200,
+
+	Debug: false,
+}
 
 const (
+	conifgFile = "photoview.toml"
+
 	photosUrl   = "/photos"
 	downloadUrl = "/download"
 
@@ -50,23 +62,28 @@ type program struct {
 func (p *program) Start(s service.Service) error {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	p.exit = make(chan struct{})
-
-	l, err := net.Listen("tcp", ":8080")
-	if err != nil {
-		return err
-	}
-	p.listener = l
+	var err error
 
 	p.execDir, err = osext.ExecutableFolder()
 	if err != nil {
 		return err
 	}
-	if filepath.IsAbs(CacheFolder) {
-		p.cacheDir = CacheFolder
-	} else {
-		p.cacheDir = filepath.Join(p.execDir, CacheFolder)
+	err = p.loadOrWriteConifg()
+	if err != nil {
+		return err
 	}
 
+	l, err := net.Listen("tcp", config.ListenOn)
+	if err != nil {
+		return err
+	}
+	p.listener = l
+
+	if filepath.IsAbs(config.CacheFolder) {
+		p.cacheDir = config.CacheFolder
+	} else {
+		p.cacheDir = filepath.Join(p.execDir, config.CacheFolder)
+	}
 	err = p.loadTemplate()
 	if err != nil {
 		return err
@@ -76,6 +93,24 @@ func (p *program) Start(s service.Service) error {
 	logger.Info("Starting")
 	go p.run(l)
 	return nil
+}
+
+func (p *program) loadOrWriteConifg() error {
+	configPath := filepath.Join(p.execDir, conifgFile)
+	_, err := toml.DecodeFile(configPath, &config)
+	if os.IsNotExist(err) {
+		f, err := os.Create(configPath)
+		if err != nil {
+			return err
+		}
+		coder := toml.NewEncoder(f)
+		err = coder.Encode(config)
+		f.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return err
 }
 func (p *program) loadTemplate() error {
 	var err error
@@ -115,7 +150,7 @@ func (p *program) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		resolutionString = r.URL.Path[atIndex+1:]
 	}
 
-	fullPath := filepath.Join(FileRoot, urlPath)
+	fullPath := filepath.Join(config.FileRoot, urlPath)
 	fi, err := os.Stat(fullPath)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -123,7 +158,7 @@ func (p *program) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if fi.IsDir() {
-		if debug {
+		if config.Debug {
 			err := p.loadTemplate()
 			if err != nil {
 				logger.Error(err)
@@ -174,8 +209,8 @@ func (p *program) apiPOST(w http.ResponseWriter, r *http.Request) {
 	case "/delete":
 		for _, item := range list {
 			err = os.Rename(
-				filepath.Join(FileRoot, reqPath, item),
-				filepath.Join(TrashFolder, item),
+				filepath.Join(config.FileRoot, reqPath, item),
+				filepath.Join(config.TrashFolder, item),
 			)
 			if err != nil {
 				break
