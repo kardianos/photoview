@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"strings"
 
-	"bitbucket.org/kardianos/osext"
+	"github.com/kardianos/osext"
 	"github.com/BurntSushi/toml"
 	"github.com/kardianos/service"
 )
